@@ -26,7 +26,6 @@ class Session:
 
         # opening the socket for the session
         self.socket = openPort(port, conType)
-        self.socket.listen()
 
         # wait for clients
         self.waitClientRequest()

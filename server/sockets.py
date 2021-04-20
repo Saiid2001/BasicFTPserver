@@ -14,6 +14,7 @@ def openPort(port,conType):
     def openTCP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((HOST, port))
+        sock.listen()
         return sock
 
     def openUDP():
