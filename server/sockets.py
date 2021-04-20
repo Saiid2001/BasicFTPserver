@@ -20,6 +20,7 @@ def openPort(port,conType):
     def openUDP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((HOST, port))
+
         return sock
 
     if conType == "TCP":
@@ -28,3 +29,4 @@ def openPort(port,conType):
         return openUDP()
     else:
         raise InvalidConnectionTypeException(conType)
+
