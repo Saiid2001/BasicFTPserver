@@ -42,7 +42,7 @@ class ClientSession(Session):
 
             if waitSuccess:
                 data = self.client['connection'].recv(1024)
-                if data and data[:3] == '100':
+                if data and data[:3] == b'100':
                     return
                 else:
                     self.sendMessage(message, waitSuccess = True)
