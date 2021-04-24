@@ -5,6 +5,8 @@ import json
 from config import FILE_PATH
 
 
+
+
 class TcpFTPSession(Session):
     def __init__(self):
         print('[TCP FTP Session]: Started')
@@ -35,7 +37,8 @@ class UdpFTPSession(Session):
             b'211': self.requestReceiveFile,
             b'212': self.receiveSegment,
             b'230': self.getFiles,
-            b'241': self.startSendFile
+            b'241': self.startSendFile,
+            b'600': self.close
         }
         Session.__init__(self, 'UDP FTP Session', UdpFTPSession.port(), 'UDP')
 
@@ -82,7 +85,7 @@ class UdpFTPSession(Session):
 
                 # verify acknowledgment message
                 if rec and rec[:3] == b'100':
-                    return
+                    return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
                 else:
                     ticSend, tocSend, tocAll,_, _ = self.sendMessage(data, isString=False, waitSuccess=True)
 
@@ -108,6 +111,7 @@ class UdpFTPSession(Session):
                 except AssertionError as e:
                     print(f'[{self.name}]:', e)
                     self.sendMessage(f'400 ' + str(e))
+
 
         # if connection closed wait for a new one.
 
@@ -140,7 +144,7 @@ class UdpFTPSession(Session):
 
         # executing the command requested by the client
         try:
-            self.commands[opcode](args, timestamp)
+            back = self.commands[opcode](args, timestamp)
 
         except AssertionError as e:
             print(f'[{self.name}]:', e)
@@ -258,13 +262,12 @@ class UdpFTPSession(Session):
         files = json.dumps(getFileList())
         self.sendMessage('230'+files)
 
-
     def startSendFile(self, args, timestamp = None):
 
         # example: 2411
 
         # make sure args exist
-        assert args, "Expected 3 arguments: fileName, fileType, segmentsNumber"
+        assert args, "Expected 1 argument: file id"
 
         # parse args
         fileID = int(args.decode('utf-8'))
@@ -285,7 +288,7 @@ class UdpFTPSession(Session):
             'bitrates': [time.perf_counter_ns() / 1000.0],  # timestamps of arrival of segments
         }
 
-        self.sendMessage(f'211{fileName}\x1c{fileType}\x1c{numSegments}', waitSuccess=True)
+        self.sendMessage(f'241{fileName}\x1c{fileType}\x1c{numSegments}', waitSuccess=True)
 
         start = None
         end = None
@@ -302,7 +305,7 @@ class UdpFTPSession(Session):
 
     def sendSegment(self,index, segment):
         msg = f'212{index}\x1c'
-        startSend, endSend, endAll, durationSend, durationAll = self.sendMessage(bytes(msg,'utf-8')+segment,isString=False)
+        startSend, endSend, endAll, durationSend, durationAll = self.sendMessage(bytes(msg,'utf-8')+segment,isString=False, waitSuccess=True)
         bitrate = len(segment)*8/durationAll*1E6
         return startSend, endAll, bitrate
 
