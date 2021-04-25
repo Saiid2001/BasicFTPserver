@@ -7,20 +7,17 @@ class InvalidConnectionTypeException(Exception):
     def str(self):
         return "Type "+self.type+" is not valid. Valid types are [TCP, UDP]."
 
-def openPort(port,conType):
+def openSocket(port,conType):
     #constants
-    HOST = '127.0.0.1'
+    SERVER = '127.0.0.1'
 
     def openTCP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((HOST, port))
-        sock.listen()
+        sock.connect((SERVER, port))
         return sock
 
     def openUDP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((HOST, port))
-
         return sock
 
     if conType == "TCP":

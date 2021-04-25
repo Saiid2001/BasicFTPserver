@@ -1,4 +1,4 @@
-from .session import Session
+from .session import Session, SessionClosedException
 from .FTP import TcpFTPSession, UdpFTPSession
 
 
@@ -75,6 +75,9 @@ class ClientSession(Session):
                 # if connection closed wait for a new one.
                 return self.waitClientRequest()
 
+        print(f'[{self.name}]: Client Ended Connection')
+        return self.waitClientRequest()
+
     def onReceived(self, payload):
         """
         Handle the received message from the client.
@@ -129,7 +132,10 @@ class ClientSession(Session):
         self.sendMessage(f'210{FTPSession[typeCode].port()}', waitSuccess=True)
 
         # opens the FTPSession
-        FTPSession[typeCode]()
+        try:
+            FTPSession[typeCode]()
+        except SessionClosedException:
+            return
 
     # OPCODE 222
     def keepAlive(self, args):

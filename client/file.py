@@ -30,8 +30,6 @@ def writeFile(fileName, fileType, directory, data):
     with open(location, 'wb') as f:
         f.write(data)
 
-    addFile(fileName, fileType)
-
 
 # Saiid El Hajj Chehade
 def segmentData(maxSize, data):
@@ -65,33 +63,3 @@ def segmentData(maxSize, data):
 def compileData(dataSegments):
     return b''.join(dataSegments)
 
-
-def getFileList():
-    files = json.load(open(LIST_PATH, 'r'))
-    output = []
-    for file in files['files']:
-        output.append({'file': file['name']+"."+file['type'], 'id': file['id']})
-    return output
-
-def addFile(fileName,fileType):
-    files = json.load(open(LIST_PATH, 'r'))
-
-    matches = [i for i in range(len(files['files'])) if files['files'][i]['name']==fileName and files['files'][i]['type']==fileType]
-    if len(matches) >0: return
-
-    files['lastFileID'] += 1
-    files['files'].append({
-        "id": files['lastFileID'],
-        "name": fileName,
-        "type": fileType
-    })
-
-    json.dump(files, open(LIST_PATH, 'w') )
-
-def getFile(id, directory):
-    files = json.load(open(LIST_PATH, 'r'))
-
-    matches = [i for i in range(len(files['files'])) if files['files'][i]['id']==id]
-    assert len(matches) > 0, "Couldn't find file with given id."
-
-    return files['files'][matches[0]]['name'],files['files'][matches[0]]['type'], readFile(files['files'][matches[0]]['name'],files['files'][matches[0]]['type'], directory)

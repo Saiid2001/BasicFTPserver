@@ -2,6 +2,11 @@ from sockets import openPort
 
 
 # Saiid EL Hajj Chehade
+class SessionClosedException(Exception):
+    def str(self):
+        return "Closed Session"
+
+
 class Session:
     '''
     Session is a base class for the possible socket sessions on the server.
@@ -39,16 +44,18 @@ class Session:
         '''
         pass
 
-    def close(self):
+    def close(self, *args):
         '''
         Closes session and socket connection.
         '''
         if self.socket:
-            print('Socket closed')
+
             self.sendMessage('500 Closing Connection')
             self.socket.close()
 
-    def onReceived(self, payload):
+        raise SessionClosedException()
+
+    def onReceived(self, payload, acknowledge=False):
         '''
         Handles Received Messages.
         In base class, this prints the received message
@@ -61,7 +68,8 @@ class Session:
         print("[" + self.name + "]:", self.client["address"][0] + ":" + str(self.client['address'][1]), 'sent: ', text)
 
         # send optional acknowledgment
-        self.sendMessage('100 Received')
+        if acknowledge:
+            self.sendMessage('100 Received')
 
     def waitClientRequest(self):
         # for the base class we assume connection is immediate
@@ -75,4 +83,3 @@ class Session:
 
     def sendMessage(self, message):
         pass
-
