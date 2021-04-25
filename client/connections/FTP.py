@@ -5,7 +5,7 @@ import json
 from config import FILE_PATH
 
 class TcpFTPConnection(Connection):
-
+#rim and elie
     def __init__(self, port):
         self.server = ('127.0.0.1', port)
         self.fileToReceive = None
