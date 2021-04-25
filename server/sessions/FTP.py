@@ -4,7 +4,7 @@ import time
 import json
 from config import FILE_PATH
 
-
+# Rim Barakat and Elie Melki
 class TcpFTPSession(Session):
     def __init__(self):
 
@@ -208,6 +208,7 @@ class TcpFTPSession(Session):
 
             self.fileToReceive = None
 
+    # display file list in the server
     def getFiles(self, args, timestamp=None):
         print(f'[{self.name}]:', 'Sending File list')
         files = json.dumps(getFileList())
@@ -241,6 +242,7 @@ class TcpFTPSession(Session):
 
         self.sendMessage(f'241{fileName}\x1c{fileType}\x1c{numSegments}')
 
+        # generating average bitrate
         start = None
         end = None
         for i, s in enumerate(segments):
@@ -264,7 +266,7 @@ class TcpFTPSession(Session):
 
     @staticmethod
     def port():
-        return 6001
+        return 6001   # TCP port
 
 
 # Saiid El Hajj Chehade
@@ -563,7 +565,7 @@ class UdpFTPSession(Session):
 
     @staticmethod
     def port():
-        return 6000
+        return 6000   # UDP port
 
 
 def getBitrate(dataSize, duration):
