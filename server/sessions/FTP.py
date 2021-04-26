@@ -36,7 +36,10 @@ class TcpFTPSession(Session):
         }
 
         # handle any subsequent requests by going to run()
-        super().waitClientRequest()
+        try:
+            super().waitClientRequest()
+        except ConnectionResetError:
+            self.close()
 
     def sendMessage(self, message, isString=True, waitSuccess=False):
         """
@@ -66,6 +69,7 @@ class TcpFTPSession(Session):
         # infinite loop to read multiple requests
         while True:
             # save the received message in data
+
             data = self.client['connection'].recv(1024)
             timestamp = time.perf_counter_ns() / 1000.0
             if not data:
@@ -79,8 +83,8 @@ class TcpFTPSession(Session):
                 print(f'[{self.name}]:', e)
                 self.sendMessage(f'400 ' + str(e))
 
-        # if connection closed wait for a new one.
-        return self.waitClientRequest()
+        # if connection closed close it
+        return self.close()
 
     def onReceived(self, payload, timestamp=None):
 
@@ -502,7 +506,7 @@ class UdpFTPSession(Session):
             data = compileData(self.fileToReceive['segments'])
             writeFile(self.fileToReceive['name'], self.fileToReceive['type'], FILE_PATH, data)
 
-            self.sendMessage(f'100')
+            # self.sendMessage(f'100')
             print(f'[{self.name}]:',
                   f'file [{self.fileToReceive["name"]}.{self.fileToReceive["type"]}] Received successfully')
 

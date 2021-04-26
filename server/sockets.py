@@ -1,4 +1,5 @@
 import socket
+from config import HOST_IP
 #defining custom exceptions
 class InvalidConnectionTypeException(Exception):
     def __init__(self, conType):
@@ -9,7 +10,7 @@ class InvalidConnectionTypeException(Exception):
 
 def openPort(port,conType):
     #constants
-    HOST = '127.0.0.1'
+    HOST = HOST_IP
 
     def openTCP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
