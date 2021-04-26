@@ -4,11 +4,13 @@ from file import readFile, compileData, writeFile,  segmentData
 import json
 from config import FILE_PATH, SERVER_IP
 
+# Rim Barakat and Elie Melki
 class TcpFTPConnection(Connection):
 #rim and elie
     def __init__(self, port, server_ip=None):
         self.fileToReceive = None
         self.SEPERATOR = b'\x1c'
+
         self.BUFFER_SIZE = 1000
         Connection.__init__(self, 'TCP FTP Connection', port, 'TCP', server_ip=server_ip)
 
@@ -47,7 +49,7 @@ class TcpFTPConnection(Connection):
             'rate': 0,  # realtime average of bitrate
             'path': directory
         }
-        # self.sendMessage(f'100 file ready to receive')
+        
 
         while self.fileToReceive:
             opcode, args, timestamp = self.listen()
@@ -55,17 +57,19 @@ class TcpFTPConnection(Connection):
             self.receiveSegment(args, timestamp, log)
 
     def receiveSegment(self, args, timestamp, log= lambda a,b,c: None ):
+
         assert self.fileToReceive is not None, "Server not expecting file"
         assert self.fileToReceive['received'] != self.fileToReceive['total'], "Received all segments"
 
         data = args
         # increment the number of segments received
         self.fileToReceive["received"] += 1
-        # save the segment data
+        # save the segment data and append data
         self.fileToReceive['segments'].append(data)
         # add the timestamp of arrival of segment
         self.fileToReceive['timestamps'].append(timestamp)
 
+        # get average rate
         self.fileToReceive['rate'] = getAverageRate(
             sampleNumber=self.fileToReceive['received'],
             oldAverage=self.fileToReceive['rate'],
@@ -77,7 +81,6 @@ class TcpFTPConnection(Connection):
               f'Receiving file [{self.fileToReceive["name"]}.{self.fileToReceive["type"]}] - ({self.fileToReceive["received"]}/{self.fileToReceive["total"]}) - {round(self.fileToReceive["rate"])} bps ')
 
         log(self.fileToReceive["received"],self.fileToReceive["total"],self.fileToReceive["rate"])
-
 
         if self.fileToReceive['received'] == self.fileToReceive['total']:
             data = compileData(self.fileToReceive['segments'])
@@ -107,7 +110,7 @@ class TcpFTPConnection(Connection):
         }
 
         self.sendMessage(f'211{fileName}\x1c{fileType}\x1c{numSegments}')
-
+        # generate average bitrate 
         start = None
         end = None
         for i, s in enumerate(segments):
@@ -165,8 +168,9 @@ class TcpFTPConnection(Connection):
         return data[:3], data[3:], timestamp
 
     def type():
-        return 0
+        return 0  # type 0 for TCP 
 
+# Marc Andraos
 class UdpFTPConnection(Connection):
     #Mark
     def __init__(self, port, server_ip=None):
@@ -354,7 +358,7 @@ class UdpFTPConnection(Connection):
 
 
     def type():
-        return 1
+        return 1  # type 1 for UDP
 
 def getBitrate(dataSize, duration):
     bits = dataSize * 8
