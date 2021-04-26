@@ -25,7 +25,6 @@ def openSocket(port,conType, server_ip =None):
 
     def openUDP():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
         return sock
 
     if conType == "TCP":

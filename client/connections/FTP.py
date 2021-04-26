@@ -2,6 +2,7 @@ from .connection import Connection
 import time
 from file import readFile, compileData, writeFile,  segmentData
 import json
+
 from config import FILE_PATH, SERVER_IP
 
 # Rim Barakat and Elie Melki
@@ -235,8 +236,9 @@ class UdpFTPConnection(Connection):
         seqNum = int(seqNum.decode('utf-8'))
 
         assert seqNum < self.fileToReceive['total'], "Sequence number not in range"
-        assert self.fileToReceive['segments'][seqNum] is None, "Segment already received"
-
+        if self.fileToReceive['segments'][seqNum] is not None:
+            self.sendMessage(f'100{seqNum}')
+            return
         # increment the number of segments received
         self.fileToReceive["received"] += 1
         # save the segment data
@@ -324,18 +326,26 @@ class UdpFTPConnection(Connection):
             tocAll = tocSend
             if waitSuccess:
                 # wait message from client
-                rec, addr = self.socket.recvfrom(1024)
-                tocAll = time.perf_counter_ns() / 1000.0
-                # ignore all messages if not from client
-                while addr != self.server:
+
+                try:
+                    self.socket.settimeout(5)
                     rec, addr = self.socket.recvfrom(1024)
                     tocAll = time.perf_counter_ns() / 1000.0
+                    self.socket.settimeout(1000)
+                    # ignore all messages if not from client
+                    while addr != self.server:
+                        rec, addr = self.socket.recvfrom(1024)
+                        tocAll = time.perf_counter_ns() / 1000.0
 
-                # verify acknowledgment message
-                if rec and rec[:3] == b'100':
-                    return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
-                else:
-                    ticSend, tocSend, tocAll,_, _ = self.sendMessage(data, isString=False, waitSuccess=True)
+                    # verify acknowledgment message
+                    if rec and rec[:3] == b'100':
+                        return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
+                    else:
+                        ticSend, tocSend, tocAll,_, _ = self.sendMessage(data, isString=False, waitSuccess=True)
+                except Exception:
+                    ticSend, tocSend, tocAll, _, _ = self.sendMessage(data, isString=False, waitSuccess=True)
+
+
 
             return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
 

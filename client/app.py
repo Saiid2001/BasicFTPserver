@@ -1,5 +1,5 @@
 
-from .gui import connectionPrompt
+from gui import connectionPrompt
 
 connectionPrompt()
 
