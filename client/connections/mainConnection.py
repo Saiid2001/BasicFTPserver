@@ -106,7 +106,7 @@ class MainConnection(Connection):
 
         start = time.perf_counter_ns()/1000.0
 
-        while time.perf_counter_ns()/1000.0-start < 10000:
+        while time.perf_counter_ns()/1000.0-start < 1000:
             pass
 
         print(f'[{self.name}]: Starting FTP Connection')

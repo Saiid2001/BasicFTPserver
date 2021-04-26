@@ -23,12 +23,12 @@ class Connection:
         # definitions
         self.name = name
         if server_ip:
-            self.server = (SERVER_IP, port)
+            self.server = (server_ip, port)
         else:
             self.server = (SERVER_IP, port)
 
         # opening the socket for the session
-        self.socket = openSocket(port, conType, server_ip)
+        self.socket = openSocket(port, conType, self.server[0])
         # wait for clients
         self.onConnection()
 

@@ -334,18 +334,24 @@ class UdpFTPSession(Session):
             tocAll = tocSend
             if waitSuccess:
                 # wait message from client
-                rec, addr = self.socket.recvfrom(1024)
-                tocAll = time.perf_counter_ns() / 1000.0
-                # ignore all messages if not from client
-                while addr != self.client['address']:
+                try:
+                    self.socket.settimeout(5)
                     rec, addr = self.socket.recvfrom(1024)
+                    self.socket.settimeout(1000)
                     tocAll = time.perf_counter_ns() / 1000.0
+                    # ignore all messages if not from client
+                    while addr != self.client['address']:
+                        rec, addr = self.socket.recvfrom(1024)
+                        tocAll = time.perf_counter_ns() / 1000.0
 
-                # verify acknowledgment message
-                if rec and rec[:3] == b'100':
-                    return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
-                else:
-                    ticSend, tocSend, tocAll,_, _ = self.sendMessage(data, isString=False, waitSuccess=True)
+                    # verify acknowledgment message
+                    if rec and rec[:3] == b'100':
+                        return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
+                    else:
+                        ticSend, tocSend, tocAll,_, _ = self.sendMessage(data, isString=False, waitSuccess=True)
+                except Exception:
+                    # catching timeouts
+                    ticSend, tocSend, tocAll, _, _ = self.sendMessage(data, isString=False, waitSuccess=True)
 
             return ticSend, tocSend,tocAll, tocSend-ticSend, tocAll-ticSend
 
@@ -485,6 +491,9 @@ class UdpFTPSession(Session):
 
         assert seqNum < self.fileToReceive['total'], "Sequence number not in range"
         assert self.fileToReceive['segments'][seqNum] is None, "Segment already received"
+        if self.fileToReceive['segments'][seqNum] is not None:
+            self.sendMessage(f'100{seqNum}')
+            return
 
         # increment the number of segments received
         self.fileToReceive["received"] += 1
