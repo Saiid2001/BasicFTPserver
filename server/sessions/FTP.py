@@ -163,8 +163,6 @@ class TcpFTPSession(Session):
             'rate': 0  # realtime average of bitrate
         }
 
-        # # manual acknowledgment
-        # self.sendMessage(f'100 file ready to be received')
 
     def receiveSegment(self, args, timestamp):
         """
