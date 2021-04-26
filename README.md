@@ -32,3 +32,6 @@ Next, a new window will open up with a file list of available files and the opti
 Finally you can close the app by hitting the X button. (please note that if you force close the console of the app, a connection issue might occure because of incomplete closing).
 
 
+## Deliverables
+1. Both sending and receiving rates and averages are visible. For the client you can see it in the plot at the end or in the console or besides the progress bar throughout. For the server it is shown in the console log of the app throughout the process.
+
