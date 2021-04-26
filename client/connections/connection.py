@@ -1,5 +1,8 @@
+# Code for base connection by Saiid El Hajj Chehade
+
 import socket
 from sockets import openSocket
+from config import SERVER_IP
 class Connection:
     '''
     Connection is a base class for the possible socket connections to the server.
@@ -10,7 +13,7 @@ class Connection:
 
     '''
 
-    def __init__(self, name, port, conType):
+    def __init__(self, name, port, conType, server_ip=None):
         '''
         Initializes the Session Object
         :param name: str -optional name of the session object.
@@ -19,10 +22,13 @@ class Connection:
         '''
         # definitions
         self.name = name
-        self.server = ('127.0.0.1', port)
+        if server_ip:
+            self.server = (SERVER_IP, port)
+        else:
+            self.server = (SERVER_IP, port)
 
         # opening the socket for the session
-        self.socket = openSocket(port, conType)
+        self.socket = openSocket(port, conType, server_ip)
         # wait for clients
         self.onConnection()
 

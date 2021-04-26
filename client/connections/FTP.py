@@ -2,23 +2,24 @@ from .connection import Connection
 import time
 from file import readFile, compileData, writeFile,  segmentData
 import json
-from config import FILE_PATH
+from config import FILE_PATH, SERVER_IP
 
 # Rim Barakat and Elie Melki
 class TcpFTPConnection(Connection):
-
-    def __init__(self, port):
-        self.server = ('127.0.0.1', port)
+#rim and elie
+    def __init__(self, port, server_ip=None):
         self.fileToReceive = None
         self.SEPERATOR = b'\x1c'
-        Connection.__init__(self, 'TCP FTP Connection', port, 'TCP')  # connection session contains steps to create socket and connect for TCPclient
+
+        self.BUFFER_SIZE = 1000
+        Connection.__init__(self, 'TCP FTP Connection', port, 'TCP', server_ip=server_ip)
 
     # get the list of files available in the server
     def getFiles(self):
         self.sendMessage("230")
         opcode, fileListString, _ = self.listen()
 
-        assert opcode == b'230', "Incorrect response"
+        assert opcode == b'230', f'Incorrect response {opcode}'
 
         fileListString.decode('utf-8')
 
@@ -27,7 +28,7 @@ class TcpFTPConnection(Connection):
         return fileList
 
     # client downloads files from server
-    def downloadFile(self, fileID, directory):
+    def downloadFile(self, fileID, directory, log= lambda a,b,c: None ):
         self.sendMessage(f'241{fileID}')
         opcode, args, timestamp = self.listen()
 
@@ -52,12 +53,11 @@ class TcpFTPConnection(Connection):
 
         while self.fileToReceive:
             opcode, args, timestamp = self.listen()
-            print(opcode)
             assert opcode == b'212', "Incorrect Response"
-            self.receiveSegment(args, timestamp)
-            
-    # client receives fragmented file then appends the segements back together
-    def receiveSegment(self, args, timestamp):
+            self.receiveSegment(args, timestamp, log)
+
+    def receiveSegment(self, args, timestamp, log= lambda a,b,c: None ):
+
         assert self.fileToReceive is not None, "Server not expecting file"
         assert self.fileToReceive['received'] != self.fileToReceive['total'], "Received all segments"
 
@@ -76,12 +76,12 @@ class TcpFTPConnection(Connection):
             newSampleSize=len(data),
             duration=timestamp - self.fileToReceive['timestamps'][-2]
         )
-
+        self.sendMessage('100 received')
         print(f'[{self.name}]:',
               f'Receiving file [{self.fileToReceive["name"]}.{self.fileToReceive["type"]}] - ({self.fileToReceive["received"]}/{self.fileToReceive["total"]}) - {round(self.fileToReceive["rate"])} bps ')
 
-        self.sendMessage('100 received')
-        # save the file into chosen directory
+        log(self.fileToReceive["received"],self.fileToReceive["total"],self.fileToReceive["rate"])
+
         if self.fileToReceive['received'] == self.fileToReceive['total']:
             data = compileData(self.fileToReceive['segments'])
             writeFile(self.fileToReceive['name'], self.fileToReceive['type'], self.fileToReceive['path'], data)
@@ -92,10 +92,10 @@ class TcpFTPConnection(Connection):
             self.fileToReceive = None
 
     # client uploads files on server
-    def sendFile(self, directory, fileName, fileType):
+    def sendFile(self, directory, fileName, fileType, log = lambda a,b,c: None):
         data = readFile(fileName, fileType, directory)
 
-        segments, numSegments = segmentData(1012, data)
+        segments, numSegments = segmentData(self.BUFFER_SIZE, data)
 
         print(f'[{self.name}]:', f'Sending file [{fileName}.{fileType}] - (0/{numSegments}) ')
 
@@ -117,6 +117,7 @@ class TcpFTPConnection(Connection):
             startS, endS, bitrate = self.sendSegment(i, s)
             print(f'[{self.name}]:',
                   f'Sending file [{fileName}.{fileType}] - ({i + 1}/{numSegments}) - {round(bitrate)} bps')
+            log(i + 1,numSegments,bitrate )
 
             if not start:
                 start = startS
@@ -126,7 +127,7 @@ class TcpFTPConnection(Connection):
         print(f'[{self.name}]:', f'Finished Sending file [{fileName}.{fileType}] - throughput: {throughput} bps')
 
     def sendSegment(self, index, segment):
-        msg = f'212{index}\x1c'
+        msg = f'212'
         startSend, endSend, endAll, durationSend, durationAll = self.sendMessage(bytes(msg, 'utf-8') + segment,
                                                                                  isString=False, waitSuccess=True)
         bitrate = len(segment) * 8 / durationAll * 1E6
@@ -171,19 +172,20 @@ class TcpFTPConnection(Connection):
 
 # Marc Andraos
 class UdpFTPConnection(Connection):
-    def __init__(self, port):
+    #Mark
+    def __init__(self, port, server_ip=None):
 
-        self.server = ('127.0.0.1', port)
         self.fileToReceive  = None
         self.SEPERATOR = b'\x1c'
-        Connection.__init__(self, 'UDP FTP Connection', port, 'UDP')
+        self.BUFFER_SIZE = 1000
+        Connection.__init__(self, 'UDP FTP Connection', port, 'UDP', server_ip=server_ip)
 
 
     def getFiles(self):
         self.sendMessage("230")
         opcode, fileListString, _ = self.listen()
 
-        assert opcode==b'230', "Incorrect response"
+        assert opcode == b'230', f'Incorrect response {opcode}'
 
         fileListString.decode('utf-8')
 
@@ -192,7 +194,7 @@ class UdpFTPConnection(Connection):
         return fileList
 
 
-    def downloadFile(self, fileID, directory):
+    def downloadFile(self, fileID, directory, log= lambda a,b,c: a ):
         self.sendMessage(f'241{fileID}')
         opcode, args, timestamp = self.listen()
 
@@ -217,10 +219,10 @@ class UdpFTPConnection(Connection):
         while self.fileToReceive:
             opcode, args, timestamp = self.listen()
             assert opcode == b'212', "Incorrect Response"
-            self.receiveSegment(args, timestamp)
+            self.receiveSegment(args, timestamp,log)
 
 
-    def receiveSegment(self, args, timestamp):
+    def receiveSegment(self, args, timestamp, log= lambda a,b,c: a ):
 
         assert self.fileToReceive is not None, "Server not expecting file"
         assert self.fileToReceive['received'] != self.fileToReceive['total'], "Received all segments"
@@ -248,28 +250,26 @@ class UdpFTPConnection(Connection):
             newSampleSize=len(data),
             duration=timestamp - self.fileToReceive['timestamps'][-2]
         )
-
+        self.sendMessage(f'100{seqNum}')
         print(f'[{self.name}]:',
               f'Receiving file [{self.fileToReceive["name"]}.{self.fileToReceive["type"]}] - ({self.fileToReceive["received"]}/{self.fileToReceive["total"]}) - {round(self.fileToReceive["rate"])} bps ')
 
-        self.sendMessage(f'100{seqNum}')
+        log(self.fileToReceive["received"],self.fileToReceive["total"],self.fileToReceive["rate"] )
 
         if self.fileToReceive['received'] == self.fileToReceive['total']:
             data = compileData(self.fileToReceive['segments'])
             writeFile(self.fileToReceive['name'], self.fileToReceive['type'], self.fileToReceive['path'], data)
-
-            self.sendMessage(f'100')
             print(f'[{self.name}]:',
                   f'file [{self.fileToReceive["name"]}.{self.fileToReceive["type"]}] Received successfully')
 
             self.fileToReceive = None
 
 
-    def sendFile(self, directory, fileName, fileType):
+    def sendFile(self, directory, fileName, fileType, log = lambda a,b,c: None):
 
         data = readFile(fileName, fileType, directory)
 
-        segments, numSegments = segmentData(1012, data)
+        segments, numSegments = segmentData(self.BUFFER_SIZE, data)
 
         print(f'[{self.name}]:', f'Sending file [{fileName}.{fileType}] - (0/{numSegments}) ')
 
@@ -291,6 +291,7 @@ class UdpFTPConnection(Connection):
             startS, endS, bitrate = self.sendSegment(i, s)
             print(f'[{self.name}]:',
                   f'Sending file [{fileName}.{fileType}] - ({i + 1}/{numSegments}) - {round(bitrate)} bps')
+            log(i + 1,numSegments,bitrate)
 
             if not start:
                 start = startS
@@ -341,9 +342,10 @@ class UdpFTPConnection(Connection):
     def listen(self):
 
         data, addr = self.socket.recvfrom(1024)
+
         timestamp = time.perf_counter_ns()/1000.0
         assert addr == self.server, "Received message not from server"
-        assert len(data)>3, "No agrs received"
+        assert len(data)>3, f'No args received {data}'
         return data[:3], data[3:], timestamp
 
     def close(self):

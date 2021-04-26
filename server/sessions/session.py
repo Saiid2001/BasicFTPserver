@@ -50,7 +50,7 @@ class Session:
         '''
         if self.socket:
 
-            self.sendMessage('500 Closing Connection')
+            #self.sendMessage('500 Closing Connection')
             self.socket.close()
 
         raise SessionClosedException()

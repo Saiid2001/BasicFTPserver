@@ -1,6 +1,8 @@
+# Code for main connection by Saiid El Hajj Chehade
+
 from .connection import Connection
 from .FTP import TcpFTPConnection, UdpFTPConnection
-
+import time
 class MainConnection(Connection):
     """
     ClientConnection is the connection that handles user entry and main operations.
@@ -9,14 +11,14 @@ class MainConnection(Connection):
     222 - keepAlive
     """
 
-    def __init__(self):
+    def __init__(self, server_ip=None):
 
         # Dictionary of available commands to be requested from Client Connection
         # self.commands = {
         #     b'210': self.startFTPConnection,
         #     b'222': self.keepAlive
         # }
-        Connection.__init__(self, 'Client Connection', 5000, 'TCP')
+        Connection.__init__(self, 'Client Connection', 5000, 'TCP', server_ip=server_ip)
 
     def sendMessage(self, message, waitSuccess=False):
         """
@@ -102,10 +104,15 @@ class MainConnection(Connection):
 
         self.sendMessage(f'100')
 
+        start = time.perf_counter_ns()/1000.0
+
+        while time.perf_counter_ns()/1000.0-start < 10000:
+            pass
+
         print(f'[{self.name}]: Starting FTP Connection')
         self.close()
 
-        return FTPConnection[typeCode](int(args.decode('utf-8')))
+        return FTPConnection[typeCode](int(args.decode('utf-8')), server_ip = self.server[0])
 
     # OPCODE 222
     def keepAlive(self, args):
