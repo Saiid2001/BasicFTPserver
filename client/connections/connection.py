@@ -1,3 +1,5 @@
+# Code for base connection by Saiid El Hajj Chehade
+
 import socket
 from sockets import openSocket
 from config import SERVER_IP

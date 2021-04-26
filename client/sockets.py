@@ -1,3 +1,5 @@
+# code for sockets by Saiid El Hajj Chehade
+
 import socket
 from config import SERVER_IP
 #defining custom exceptions

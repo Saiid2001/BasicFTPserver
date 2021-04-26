@@ -4,7 +4,7 @@ import time
 import json
 from config import FILE_PATH
 
-
+# code for TCP FTP Session by Rim and Elie
 class TcpFTPSession(Session):
     def __init__(self):
 
@@ -271,7 +271,7 @@ class TcpFTPSession(Session):
         return 6001
 
 
-# Saiid El Hajj Chehade
+# code for udp session by Saiid El Hajj Chehade
 class UdpFTPSession(Session):
     """
         UdpFTPSession handles file transfer using the UDP protocol.

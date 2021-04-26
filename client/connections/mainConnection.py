@@ -1,3 +1,5 @@
+# Code for main connection by Saiid El Hajj Chehade
+
 from .connection import Connection
 from .FTP import TcpFTPConnection, UdpFTPConnection
 import time

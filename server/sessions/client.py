@@ -1,6 +1,7 @@
 from .session import Session, SessionClosedException
 from .FTP import TcpFTPSession, UdpFTPSession
 
+# code for client session by Saiid El Hajj Chehade
 
 class ClientSession(Session):
     """

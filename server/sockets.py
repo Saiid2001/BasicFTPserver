@@ -1,6 +1,9 @@
 import socket
 from config import HOST_IP
 #defining custom exceptions
+
+# code by Saiid El Hajj Chehade
+
 class InvalidConnectionTypeException(Exception):
     def __init__(self, conType):
         self.type = conType
